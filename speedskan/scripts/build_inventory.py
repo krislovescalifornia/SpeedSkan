@@ -38,6 +38,8 @@ BRAND = {
     "Game Gear": "Sega", "Dreamcast": "Sega", "Sega CD": "Sega",
     "PlayStation": "Sony", "PlayStation 2": "Sony", "PS1": "Sony", "PS2": "Sony", "PSP": "Sony",
     "Xbox": "Microsoft",
+    "Atari 2600": "Atari", "Atari 7800": "Atari", "Atari 5200": "Atari",
+    "Atari Lynx": "Atari", "Atari Jaguar": "Atari",
 }
 
 
