@@ -1,6 +1,8 @@
 # Personal collection data & captured photos — keep local, don't share
 items.csv
 inventory.csv
+inventory.html
+price_history.csv
 captures/
 
 # Python

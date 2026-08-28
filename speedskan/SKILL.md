@@ -185,20 +185,59 @@ After appending, regenerate the catalog and read back the totals:
 python .claude/skills/speedskan/scripts/build_inventory.py
 ```
 
-This reads `items.csv`, writes a sorted `inventory.csv` (grouped by System, then
-Gold→Maybe→Cruff) with a TOTALS block appended, and prints a summary:
+This reads `items.csv` + `price_history.csv`, writes a sorted `inventory.csv` (grouped by
+System, then Gold→Maybe→Cruff) with tracking columns and a TOTALS block, ALSO writes the
+visual `inventory.html` dashboard, and prints a summary:
 
 ```
-Items: 200
-  Gold    62 items  retail $1614-2484  dealer $1025
-  Maybe   62 items  retail $788-1286   dealer $479
-  Cruff   76 items  retail $364-644    dealer $190
-  ALL    200 items  retail $2766-4414  dealer $1694
+Items: 224
+  Gold    74 items  retail $1939-3163  median $2597  dealer $1293
+  ...
+  ALL    224 items  retail $3218-5310  median $4309  dealer $2042
 ```
 
-Relay those figures to the user as a small markdown table each batch. Send the actual
-`inventory.csv` file to the user (SendUserFile) every ~5 batches or on request, not every
-turn — the running totals in text are enough between file drops.
+Lead with the **median** figure when relaying totals — it's the realistic portfolio value
+(retail low–high is the full market band). Relay a small markdown table each batch. Send
+`inventory.csv` (and, when prices have been refreshed, `inventory.html`) to the user every
+~5 batches or on request, not every turn.
+
+## Price tracking & refreshes
+
+Prices are tracked over time so the user can watch items rise/fall. Two files drive it:
+
+- `items.csv` — the current working **estimate** (your loose/CIB guess when an item is
+  first scanned). This is the fallback until a real comp exists.
+- `price_history.csv` — dated observations: `Date, System, Title, Source, Low, High, Median`.
+  Each price check appends rows (one per source). Source `est` is a placeholder; **any real
+  source (`pricecharting`, `comps`, …) on a date overrides `est` for that date.** The build
+  computes per item: current low/high/median (latest date), first-seen median, lowest &
+  highest median ever, % change, and a flag (**HOT** = median doubled vs first → shown red;
+  ▲ up >10%; ▼ down >10%; FLAT; `est` = not yet researched, Sources=0).
+
+**Seed the baseline once** (and any time new items were added) so tracking has a starting
+point: `python .claude/skills/speedskan/scripts/snapshot_prices.py` — appends today's `est`
+snapshot for every item (idempotent per day).
+
+**To refresh real prices** (do this when the user asks, or periodically):
+1. Research each target item's market price. **PriceCharting is the retro-price standard**
+   (it gives loose / CIB / new tiers) — but it **403s on WebFetch**, so use **WebSearch**
+   (`"<game> <system> pricecharting loose CIB price"`); the result summary usually contains
+   the three numbers. Cross-check with eBay sold / retailer comps when useful. **Only record
+   numbers you actually found — never invent a price.** Match the region (NTSC/US).
+2. Map each item to a Low / Median / High and append a dated row to `price_history.csv`:
+   - Median = the item's **actual-condition** price (loose price for loose items, CIB for
+     boxed). This is the headline number.
+   - Low = loose price (floor). High = CIB price (realistic used ceiling). Avoid using the
+     sealed "new" price as High — it's real but wildly inflates ranges/totals.
+   - Set Source to `pricecharting` (or `comps` for eBay/retailer-derived). Use today's date.
+3. Also update that item's `Est_Low/Est_High/Dealer` in `items.csv` to match, so the catalog
+   stays consistent (Dealer ≈ half the median).
+4. Rebuild. On the **first** refresh everything reads FLAT (first==current, same day); on
+   **later** refreshes the deltas, ▲/▼, and HOT-red appear as prices move over time.
+
+Prioritize refreshing the **gold** items (highest value, most worth getting right). A full
+224-item refresh in one pass isn't practical via search — do it in batches, and the
+`Sources` column (`est` vs a number) shows what still needs a real comp.
 
 ## Corrections
 
@@ -237,9 +276,12 @@ across sessions. Reflection is about improving the *skill*, not saving the *data
 
 ## Files
 
-- `items.csv` (project root) — master data, append-only source of truth
-- `inventory.csv` (project root) — generated catalog + totals (send this to the user)
+- `items.csv` (project root) — master catalog + current estimate; append-only source of truth
+- `price_history.csv` (project root) — dated price observations per item per source (time series)
+- `inventory.csv` (project root) — generated catalog with tracking columns + totals
+- `inventory.html` (project root) — visual dashboard; HOT (doubled) items red, gains green
 - `captures/latest.jpg` — newest webcam frame (what you Read each "look")
 - `captures/_zoom.png` — scratch crop for reading tough labels
 - `scripts/server.py` — the capture server + camera page
-- `scripts/build_inventory.py` — the totals/catalog rebuilder
+- `scripts/build_inventory.py` — the tracker/catalog/dashboard rebuilder
+- `scripts/snapshot_prices.py` — appends a dated `est` baseline snapshot to price_history
