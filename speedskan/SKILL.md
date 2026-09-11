@@ -84,6 +84,10 @@ Each time the user says "look" (or "what's this", etc.):
 Keep the per-batch reply tight: a few lines identifying the items with their tier and
 value range, then the totals table. The user is moving fast through a big pile.
 
+**Tier dots (required in every readout):** prefix each item line with a colored dot for
+its tier so the user can eyeball the batch at a glance — 🟢 for Gold, 🟡 for Maybe, 🔴 for
+Cruff. e.g. `🟢 **Contra** — Gold. Big seller. ~$30–45.`
+
 ## Valuation
 
 Estimate **loose/used resale** value (what it realistically sells for online), not
@@ -98,13 +102,36 @@ Also record a single **Dealer** point-estimate per item ≈ what a shop pays: ab
 (dealers pay pennies for common sports/shovelware carts). These sum into a "dump
 everything to a dealer" figure.
 
-Calibration notes learned in practice:
-- **Consoles are the big-ticket items.** Price them as a complete hookup (console +
-  power + AV) unless told otherwise — the user has confirmed they keep cables for every
-  console. Note "test power-on" and that a bundled controller/game raises value.
+Calibration notes learned in practice. The directional biases below were measured
+against real comps on 2026-09-10 (82 items) — trust them over your first instinct:
+
+- **Consoles are the big-ticket items, and you under-price them every time.** All seven
+  consoles comped 20–120% *above* estimate (SNES $50→$110, Sega Sports Dreamcast
+  $120→$221, Xbox $60→$93, Platinum GameCube $68→$95). **Roughly double your instinct for
+  hardware, then comp it.** Price them as a complete hookup (console + power + AV) unless
+  told otherwise — the user has confirmed they keep cables for every console. Note
+  "test power-on" and that a bundled controller/game raises value.
+- **OEM peripherals are under-priced too** — Dreamcast Mouse $28→$64, Dreamcast Keyboard
+  $32→$51, WaveBird $55→$70. Uncommon first-party peripherals behave like consoles, not
+  like accessories.
+- **Loose common NES/SNES carts you *over*-price** — Strider $18→$11, Bionic Commando
+  $23→$14, Gradius III $23→$16, Kid Icarus $32→$25. A late-80s multi-million-seller is
+  cheap loose; its value lives in the **box** (NES Zelda: $31 loose vs $180 CIB). Check
+  completeness before getting excited about a famous NES title.
+- **Sleeper categories that beat estimates hard:** Dreamcast CIB (Mr. Driller $26→$93,
+  Bomberman Online $24→$58, Seaman $32→$77), GameCube first-party Nintendo/Zelda
+  (Wind Waker $32→$75, PSO Ep I&II $25→$88), Game Boy Color puzzle/RPG (Mr. Driller
+  $23→$74). When an item is Dreamcast-CIB or GC-first-party, comp it rather than guessing.
 - **Special variants matter:** e.g. black "Sega Sports" Dreamcast >> white Dreamcast;
   Tecmo *Super* Bowl >> Tecmo Bowl; a game's *original* >> its sequel (or vice-versa —
   check). When a title has a pricey sibling, name which one it is so the user isn't misled.
+- **The name-collision trap.** A price source will happily hand you a *different product
+  with a similar name*, and the gap can be an order of magnitude: searching "black
+  Dreamcast" returns the rare **JP black console (~$938 loose)**, not the US **Sega Sports
+  black Dreamcast (~$221)**. Same shape: "Controller S Translucent Green" is probably the
+  **Green Halo Edition** ($75) but a plain S Type is $19. Always confirm the page title
+  names the exact variant before recording, and when it stays ambiguous, record the
+  conservative number in `Low`, the optimistic one in `High`, and flag it in `Notes`.
 - **Completeness:** boxed disc games = CIB (case+manual+disc). Multi-disc games (e.g.
   Shenmue) — remind the user to confirm all discs are present. Peripherals that ship as a
   set (Seaman + mic, WaveBird + receiver, Donkey Konga + bongos) are worth much more kept
@@ -207,7 +234,8 @@ Prices are tracked over time so the user can watch items rise/fall. Two files dr
 
 - `items.csv` — the current working **estimate** (your loose/CIB guess when an item is
   first scanned). This is the fallback until a real comp exists.
-- `price_history.csv` — dated observations: `Date, System, Title, Source, Low, High, Median`.
+- `price_history.csv` — dated observations:
+  `Date, System, Title, Source, Low, High, Median, URL`.
   Each price check appends rows (one per source). Source `est` is a placeholder; **any real
   source (`pricecharting`, `comps`, …) on a date overrides `est` for that date.** The build
   computes per item: current low/high/median (latest date), first-seen median, lowest &
@@ -218,26 +246,128 @@ Prices are tracked over time so the user can watch items rise/fall. Two files dr
 point: `python .claude/skills/speedskan/scripts/snapshot_prices.py` — appends today's `est`
 snapshot for every item (idempotent per day).
 
-**To refresh real prices** (do this when the user asks, or periodically):
-1. Research each target item's market price. **PriceCharting is the retro-price standard**
-   (it gives loose / CIB / new tiers) — but it **403s on WebFetch**, so use **WebSearch**
-   (`"<game> <system> pricecharting loose CIB price"`); the result summary usually contains
-   the three numbers. Cross-check with eBay sold / retailer comps when useful. **Only record
-   numbers you actually found — never invent a price.** Match the region (NTSC/US).
-2. Map each item to a Low / Median / High and append a dated row to `price_history.csv`:
-   - Median = the item's **actual-condition** price (loose price for loose items, CIB for
-     boxed). This is the headline number.
-   - Low = loose price (floor). High = CIB price (realistic used ceiling). Avoid using the
-     sealed "new" price as High — it's real but wildly inflates ranges/totals.
-   - Set Source to `pricecharting` (or `comps` for eBay/retailer-derived). Use today's date.
-3. Also update that item's `Est_Low/Est_High/Dealer` in `items.csv` to match, so the catalog
+### Where prices come from
+
+Every number in this system is one of these. Keep the roster honest — the `Source` and
+`URL` columns are what let the user (or a future session) re-check any price.
+
+**Attribution matters.** Every price in this system — `est` rows included — came from *you*,
+not from the user. They hold items to a camera; you do the identifying and the pricing. So
+when a comp lands far from an earlier `est`, that is **your** miss to own: say "my earlier
+estimate was low", never "your estimate" or "your instinct". Getting this backwards blames
+the user for your own work.
+
+| `Source` | What it actually is | Best for | How to reach it |
+|---|---|---|---|
+| `est` | **Your own estimate. Not a sourced price.** Model judgment only — *yours*, never the user's. | anything, as a placeholder until comped | n/a — replace it as soon as a real comp exists |
+| `pricecharting` | PriceCharting: the retro-game price standard. Loose / CIB / new, derived from completed sales. | games, consoles, OEM accessories (NTSC/PAL/JP) | Browser pane — see below. WebFetch 403s. |
+| `comps` | eBay **sold** listings, or a retailer's asking price that you read yourself | third-party accessories, bundles, anything PriceCharting doesn't track | eBay search → filter **Sold items**. Note in `Notes` if it's an *ask*, not a sale. |
+| `discogs` | Discogs release data + real sold statistics | vinyl / music media | Discogs API (needs a token) |
+
+Per-category best source, for when the collection widens past games:
+
+- **video games / consoles / OEM accessories** → PriceCharting
+- **vinyl records** → Discogs (strong ID *and* sold stats)
+- **trading cards** → eBay sold + 130Point; PSA/PWCC for graded
+- **toys & other collectibles** → eBay sold; Facebook Marketplace for local pricing
+- eBay has locked down *programmatic* sold-comp access — read sold listings by hand, or
+  use Terapeak inside Seller Hub.
+
+### Pulling PriceCharting numbers (the working method)
+
+**Do not record numbers from WebSearch snippets.** Verified 2026-09-10: the snippet for
+Ikaruga said $39.13/$55.72 while the live page said $41.88/$63.86. Snippets are cached and
+stale. Use WebSearch only to *find a URL*; read the price off the page.
+
+Drive the **Browser pane** (`mcp__Claude_Browser__*`). On a product page:
+
+```js
+(()=>{const g=s=>{const e=document.querySelector(s);return e?e.innerText.trim():null};
+ return document.title.split('|')[0].trim()+' >> '+g('#used_price')+' / '+g('#complete_price')})()
+```
+
+`#used_price` = loose, `#complete_price` = CIB, `#new_price` = sealed. Batch it with
+`browser_batch`, alternating navigate + javascript_exec, ~8 items per call.
+
+**Fastest path for a whole system — the console index page.** One load of
+`https://www.pricecharting.com/console/<slug>` carries ~150 titles with all three prices;
+filter the rows client-side instead of visiting each game:
+
+```js
+(()=>{const re=/wind waker|ocarina|warioware/i;
+ return [...document.querySelectorAll('#games_table tbody tr')]
+  .map(r=>[...r.querySelectorAll('td')].map(td=>td.innerText.replace(/\s+/g,' ').trim()))
+  .filter(c=>re.test(c[1]||'')).map(c=>c[1]+' >> '+c[2]+' / '+c[3])})()
+```
+
+Genre sub-pages reach the long tail the top-150 omits:
+`?genre-name=accessories`, `=systems`, `=party`.
+
+Console slugs: `nes`, `super-nintendo`, `nintendo-64`, `gamecube`, `gameboy`,
+`gameboy-color`, `sega-genesis`, `sega-master-system`, `sega-dreamcast`, `sega-saturn`,
+`playstation`, `playstation-2`, `xbox`.
+
+Gotchas, all learned the hard way:
+
+- **Cloudflare blocks `/search-products` and any background `fetch()`** — only real
+  top-level navigations to product/console pages get through.
+- A **wrong slug also lands on "Just a moment…"**, which looks identical to rate-limiting.
+  Treat a challenge page as a bad slug first: run a WebSearch restricted to
+  `pricecharting.com` and read the real URL out of the returned links.
+- Slug quirks: `&` → `%26`; apostrophes are kept literally
+  (`zelda-collector's-edition`); numerals usually replace roman ones (`shinobi-3`,
+  `gradius-3`); Zelda titles drop "The Legend of" (`zelda-wind-waker`).
+- Some items simply **aren't tracked** (obscure third-party accessories — ASCIIWARE Super
+  Advantage, Sega Arcade Power Stick). Don't force a match; leave them `est` and get an
+  eBay sold comp instead.
+- **Sort order is sticky (a session cookie), and it silently poisons later reads.** After
+  one visit to `?sort=lowest-price`, every later `/console/<slug>` returned the *cheapest*
+  list — same URL, same-looking table, wrong rows. **Always pass `?sort=popularity`
+  explicitly** on console pages, and sanity-check `document.title` (it says "Cheapest …"
+  when the sort is stuck).
+- **The index is capped at ~150 rows.** The "More" button doesn't paginate, and genre
+  sub-pages are capped too. The long tail (obscure sports carts, accessories) needs direct
+  product URLs — plan on the index for the popular 60-70% and product pages for the rest.
+
+**Verify every fuzzy match before you record it.** Substring matching happily returns a
+*different product*: `pga tour golf` → "PGA Tour Golf II [Limited Edition]", `nba jam` →
+"NBA Jam Tournament Edition", `wii fit` → "Wii Fit Plus". Each is a real page with a real
+price for something the user doesn't own. Print `target => matched title | prices` and read
+the pairs before writing anything.
+
+**Build the target list from `items.csv`, never from memory.** Writing out a plausible-looking
+list of titles for a system and pricing those is fabrication, even when every individual
+price is real — you end up recording comps for games the user has never owned. Read the
+actual rows, group them, and match against those.
+
+### Recording an observation
+
+1. Map each item to Low / Median / High and append a dated row to `price_history.csv`:
+   - **Median** = the item's **actual-condition** price (loose price for a loose item, CIB
+     for a boxed one). This is the headline number.
+   - **Low** = loose price (floor). **High** = CIB price (realistic used ceiling). Avoid the
+     sealed "new" price as High — real, but it wildly inflates ranges and totals. Keep this
+     convention even for loose items, so the time series stays comparable across refreshes;
+     just remind the user the retail-high band is a CIB ceiling, not what their loose copy
+     fetches.
+   - **URL** = the exact page you read. Every non-`est` row must carry one.
+   - Source `pricecharting`, or `comps` for eBay/retailer-derived. Use today's date.
+2. **Only record numbers you actually found — never invent a price.** Match the region
+   (NTSC/US).
+3. **Confirm you matched the right *product*, not just the right name** (see the
+   name-collision trap under Valuation). The page title must name the exact variant.
+4. Also update that item's `Est_Low/Est_High/Dealer` in `items.csv` to match, so the catalog
    stays consistent (Dealer ≈ half the median).
-4. Rebuild. On the **first** refresh everything reads FLAT (first==current, same day); on
+5. Rebuild. On an item's **first** comp everything reads FLAT (first==current, same day); on
    **later** refreshes the deltas, ▲/▼, and HOT-red appear as prices move over time.
 
-Prioritize refreshing the **gold** items (highest value, most worth getting right). A full
-224-item refresh in one pass isn't practical via search — do it in batches, and the
-`Sources` column (`est` vs a number) shows what still needs a real comp.
+Prioritize the **gold** items (highest value, most worth getting right). The `Sources`
+column (`est` vs a number) shows what still needs a real comp. Two distinct things show up
+as "movement", and they are worth separating when you report:
+
+- **Real drift** — an item that already had a real comp, re-pulled later. This is market news.
+- **Estimate correction** — an item's *first* real comp. This measures your guess against
+  the market, not the market moving. Say so, or the user will read it as a price change.
 
 ## Corrections
 
@@ -263,6 +393,11 @@ Look back over the session for durable, generalizable lessons — not one-off fa
 - **New conventions or standing preferences** the user set (how they want lots handled, a
   default they want assumed, a bundle that must stay together).
 - **Recurring friction** — anything that made you waste steps, so you can prevent it.
+- **Where the numbers came from.** If you used a source this session — or found a better
+  way into one, or found one blocked — fold that into "Where prices come from" and
+  "Pulling PriceCharting numbers". A price with no recorded route back to its source
+  decays into a guess. The roster and the access recipes are as much a part of this
+  skill's value as the valuation heuristics.
 
 Then propose **specific edits to this file** (`SKILL.md` — the Valuation, Authenticity, or
 Conventions sections are usually where it lands), show the user the before/after, and apply
@@ -277,7 +412,8 @@ across sessions. Reflection is about improving the *skill*, not saving the *data
 ## Files
 
 - `items.csv` (project root) — master catalog + current estimate; append-only source of truth
-- `price_history.csv` (project root) — dated price observations per item per source (time series)
+- `price_history.csv` (project root) — dated price observations per item per source
+  (time series); every non-`est` row carries the source `URL` it was read from
 - `inventory.csv` (project root) — generated catalog with tracking columns + totals
 - `inventory.html` (project root) — visual dashboard; HOT (doubled) items red, gains green
 - `captures/latest.jpg` — newest webcam frame (what you Read each "look")

@@ -57,20 +57,37 @@ installing.)
 3. Hold an item in the dashed box (~6–10 inches back so the webcam can focus) and say **"look"**.
 4. Claude identifies + prices it, logs it, and shows running totals. Repeat for the next item.
 
-Your data lives in two plain CSVs in your working folder:
+Your data lives in plain files in your working folder:
 - **`items.csv`** — append-only master list (the source of truth).
 - **`inventory.csv`** — generated catalog, grouped by system and tier, with totals. Open it
   in Excel/Sheets or print it.
+- **`price_history.csv`** — dated price observations per item, each with the source and the
+  URL it was read from, so any number can be re-checked later.
+- **`inventory.html`** — a sortable/filterable dashboard with breakdown charts, top-value
+  and biggest-mover lists. Items whose price has doubled show as **HOT** in red.
 
-Prices are rough **loose/used resale estimates** to help you *triage*, not gospel — confirm
-anything valuable against real sold listings before selling.
+### Estimates vs. real comps
+
+When an item is first scanned, its price is **Claude's estimate** — fast, good enough to
+triage, and logged with source `est`. Say **"refresh prices"** and Claude looks up real
+market comps (PriceCharting for games/consoles; eBay sold listings for things it doesn't
+track) and replaces the estimate, recording the source URL.
+
+The `Sources` column tells you which is which: `est` means nobody has checked it yet.
+That distinction matters — in one real refresh, estimates ran ~39% *below* actual comps,
+with individual items off by 3×. **Comp anything before you sell or bulk it**, especially a
+pile you're about to hand to a dealer.
 
 ---
 
 ## Notes
 
 - The skill improves itself: at the end of a session it will offer to fold new lessons
-  (pricing corrections, authenticity tips) back into `SKILL.md`.
+  (pricing corrections, authenticity tips, new price sources) back into `SKILL.md`. It
+  carries calibration notes learned from real refreshes — e.g. consoles get under-priced,
+  loose common carts get over-priced — so it gets sharper the more you use it.
+- Prices are tracked **over time**: re-run a refresh weeks later and the dashboard shows
+  each item's % change, its lowest/highest ever, and flags the movers.
 - Nothing personal is committed by git — see `.gitignore` (your `items.csv`, `inventory.csv`,
   and captured photos stay local).
 - This is a triage/appraisal helper. It doesn't list anything for sale on your behalf.

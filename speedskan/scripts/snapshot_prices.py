@@ -9,7 +9,10 @@ Real multi-source prices (pricecharting, ebay-sold, etc.) are appended to
 price_history.csv as additional dated rows (one row per source per item) either
 by hand or by Claude during a price refresh — this script does NOT invent those.
 
-price_history.csv columns:  Date, System, Title, Source, Low, High, Median
+price_history.csv columns:  Date, System, Title, Source, Low, High, Median, URL
+
+URL is the page a real comp was read from (empty for 'est' rows) so any recorded
+price can be re-checked later.
 
 Usage:
     python snapshot_prices.py [DATA_DIR]
@@ -20,7 +23,7 @@ DATA_DIR = sys.argv[1] if len(sys.argv) > 1 else os.getcwd()
 ITEMS = os.path.join(DATA_DIR, "items.csv")
 HIST = os.path.join(DATA_DIR, "price_history.csv")
 TODAY = datetime.date.today().isoformat()
-HEADER = ["Date", "System", "Title", "Source", "Low", "High", "Median"]
+HEADER = ["Date", "System", "Title", "Source", "Low", "High", "Median", "URL"]
 
 def main():
     if not os.path.exists(ITEMS):
@@ -51,7 +54,7 @@ def main():
             except (ValueError, KeyError):
                 continue
             med = round((lo + hi) / 2)
-            w.writerow([TODAY, it["System"], it["Title"], "est", lo, hi, med])
+            w.writerow([TODAY, it["System"], it["Title"], "est", lo, hi, med, ""])
             added += 1
 
     print(f"Snapshot {TODAY}: added {added} 'est' rows to price_history.csv "
