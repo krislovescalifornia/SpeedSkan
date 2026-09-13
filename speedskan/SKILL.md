@@ -86,7 +86,7 @@ value range, then the totals table. The user is moving fast through a big pile.
 
 **Tier dots (required in every readout):** prefix each item line with a colored dot for
 its tier so the user can eyeball the batch at a glance — 🟢 for Gold, 🟡 for Maybe, 🔴 for
-Cruff. e.g. `🟢 **Contra** — Gold. Big seller. ~$30–45.`
+Cruff. e.g. `🟢 **<Title>** — Gold. Big seller. ~$30–45.`
 
 ## Valuation
 
@@ -105,23 +105,23 @@ everything to a dealer" figure.
 Calibration notes learned in practice. The directional biases below were measured
 against real comps on 2026-09-10 (82 items) — trust them over your first instinct:
 
-- **Consoles are the big-ticket items, and you under-price them every time.** All seven
-  consoles comped 20–120% *above* estimate (SNES $50→$110, Sega Sports Dreamcast
-  $120→$221, Xbox $60→$93, Platinum GameCube $68→$95). **Roughly double your instinct for
-  hardware, then comp it.** Price them as a complete hookup (console + power + AV) unless
-  told otherwise — the user has confirmed they keep cables for every console. Note
+- **Consoles are the big-ticket items, and you under-price them every time.** Across seven
+  4th–6th-generation consoles every one comped 20–120% *above* estimate ($50→$110,
+  $120→$221, $60→$93, $68→$95). **Roughly double your instinct for hardware, then comp
+  it.** Price them as a complete hookup (console + power + AV) unless told otherwise — ask
+  the user once whether they keep cables, and carry the answer forward. Note
   "test power-on" and that a bundled controller/game raises value.
-- **OEM peripherals are under-priced too** — Dreamcast Mouse $28→$64, Dreamcast Keyboard
-  $32→$51, WaveBird $55→$70. Uncommon first-party peripherals behave like consoles, not
-  like accessories.
-- **Loose common NES/SNES carts you *over*-price** — Strider $18→$11, Bionic Commando
-  $23→$14, Gradius III $23→$16, Kid Icarus $32→$25. A late-80s multi-million-seller is
-  cheap loose; its value lives in the **box** (NES Zelda: $31 loose vs $180 CIB). Check
-  completeness before getting excited about a famous NES title.
-- **Sleeper categories that beat estimates hard:** Dreamcast CIB (Mr. Driller $26→$93,
-  Bomberman Online $24→$58, Seaman $32→$77), GameCube first-party Nintendo/Zelda
-  (Wind Waker $32→$75, PSO Ep I&II $25→$88), Game Boy Color puzzle/RPG (Mr. Driller
-  $23→$74). When an item is Dreamcast-CIB or GC-first-party, comp it rather than guessing.
+- **OEM peripherals are under-priced too** — across three first-party Dreamcast and
+  GameCube peripherals the estimate landed near half the comp ($28→$64, $32→$51,
+  $55→$70). Uncommon first-party peripherals behave like consoles, not like accessories.
+- **Loose common NES/SNES carts you *over*-price** — four well-known late-80s carts all
+  came in under estimate ($18→$11, $23→$14, $23→$16, $32→$25). A multi-million-seller
+  is cheap loose; its value lives in the **box** — a marquee NES title can run $31 loose
+  against $180 CIB. Check completeness before getting excited about a famous NES title.
+- **Sleeper categories that beat estimates hard:** Dreamcast CIB (three titles ran
+  $26→$93, $24→$58, $32→$77), GameCube first-party Nintendo/Zelda ($32→$75, $25→$88),
+  and Game Boy Color puzzle/RPG ($23→$74). When an item is Dreamcast-CIB or
+  GC-first-party, comp it rather than guessing.
 - **Special variants matter:** e.g. black "Sega Sports" Dreamcast >> white Dreamcast;
   Tecmo *Super* Bowl >> Tecmo Bowl; a game's *original* >> its sequel (or vice-versa —
   check). When a title has a pricey sibling, name which one it is so the user isn't misled.
@@ -134,7 +134,7 @@ against real comps on 2026-09-10 (82 items) — trust them over your first insti
   conservative number in `Low`, the optimistic one in `High`, and flag it in `Notes`.
 - **Completeness:** boxed disc games = CIB (case+manual+disc). Multi-disc games (e.g.
   Shenmue) — remind the user to confirm all discs are present. Peripherals that ship as a
-  set (Seaman + mic, WaveBird + receiver, Donkey Konga + bongos) are worth much more kept
+  set (game + bundled mic, wireless pad + receiver, rhythm game + its controller) are worth much more kept
   together — flag that and keep them as one line.
 - **Controllers/accessories** sell steadily: official (OEM) > third-party. GameCube pads
   and 6-button Genesis pads are in demand.
@@ -193,14 +193,14 @@ Conventions:
 - **Duplicates:** add a second row with `(copy 2)` in the title.
 - **Identical lots:** one row with `x6` in the title and the *summed* Est_Low/High/Dealer
   for the whole lot (e.g. six $8–14 pads → `48,84,30`), noting per-unit price in Notes.
-- **Bundles that sell together:** one row (e.g. `Seaman (CIB) + Dreamcast Microphone`).
+- **Bundles that sell together:** one row (e.g. `<Game> (CIB) + <bundled peripheral>`).
 
 Append rows from the project root with a heredoc, e.g.:
 
 ```bash
 cat >> items.csv <<'EOF'
-NES,Contra,Loose,Gold,30,45,18,Big seller; always in demand,
-NES,Duck Hunt,Loose,Cruff,4,7,2,Very common Zapper title; bulk-lot,
+NES,<Exact Title>,Loose,Gold,30,45,18,Big seller; always in demand,
+NES,<Another Title>,Loose,Cruff,4,7,2,Very common; bulk-lot,
 EOF
 ```
 
@@ -285,8 +285,8 @@ a second source worth pulling is *independence*. Aim for one number per band:
 | **Mid** | `pricecharting`, `comps` | what it actually trades at |
 | **Ceiling** | `dealer-ask` | retail, cleaned and warrantied |
 
-Verified 2026-09-10 — GoldenEye 007 (N64): PriceCharting **$31** loose, DKOldies **$42.99**
-for a cleaned loose cart. A ~39% spread that a single source hides completely.
+Verified 2026-09-10 — one popular N64 cartridge: PriceCharting **$31** loose against a
+dealer ask of **$42.99** for a cleaned copy. A ~39% spread a single source hides completely.
 
 Known bias worth carrying: a listing with an inflated ask that sold via **accepted Best
 Offer** is often recorded at the *ask*, not the sale — in PriceCharting and in eBay's own
@@ -302,7 +302,7 @@ hundreds of items; don't assume the subscription exists.
 ### Pulling PriceCharting numbers (the working method)
 
 **Do not record numbers from WebSearch snippets.** Verified 2026-09-10: the snippet for
-Ikaruga said $39.13/$55.72 while the live page said $41.88/$63.86. Snippets are cached and
+one GameCube title said $39.13/$55.72 while the live page said $41.88/$63.86. Snippets are cached and
 stale. Use WebSearch only to *find a URL*; read the price off the page.
 
 Drive the **Browser pane** (`mcp__Claude_Browser__*`). On a product page:
@@ -350,9 +350,9 @@ Gotchas, all learned the hard way:
   (`zelda-collector's-edition`); numerals usually replace roman ones (`shinobi-3`,
   `gradius-3`); Zelda titles drop "The Legend of" (`zelda-wind-waker`).
 - **Hardware is not in the main index — it is in the genre sub-pages**, and far more of it
-  is tracked than it first appears. Verified 2026-09-11: ASCIIWARE Super Advantage and the
-  Sega Arcade Power Stick *are* both tracked (this file previously claimed they weren't),
-  as are every console, OEM controller, the Dreamcast keyboard and mouse. Before concluding
+  is tracked than it first appears. Verified 2026-09-11: third-party arcade sticks for SNES
+  and Genesis *are* both tracked (this file previously claimed they weren't), as are every
+  console, OEM controller, and the Dreamcast keyboard and mouse. Before concluding
   an item is untracked, check:
   `?genre-name=systems` (consoles), `?genre-name=controllers` (OEM pads, sticks, WaveBird),
   `?genre-name=accessories` (keyboards, mice, adapters). Add `&sort=popularity`.
@@ -367,8 +367,8 @@ Gotchas, all learned the hard way:
 
 **`browser_batch` can hand you the previous page's numbers.** A `javascript_exec` placed
 right after a `navigate` sometimes runs before the new document is ready and reads the page
-*before* it — on 2026-09-11 this silently attributed Genesis Arcade Power Stick sales to a
-Dreamcast console search, which would have been recorded as a real comp. **Always return
+*before* it — on 2026-09-11 this silently attributed one platform's accessory sales to a
+different console's search, which would have been recorded as a real comp. **Always return
 `document.title` alongside the numbers and check it names the page you asked for.** If it
 doesn't, re-run that lookup on its own.
 
@@ -425,7 +425,7 @@ filter. Ignore it and filter on the title instead:
 ```
 
 **Record `Low`/`High` as p25/p75, and `Median` as p50** — not min/max. Raw min/max is
-worthless here: a first pass on Contra returned a $5 low (a damaged cart that slipped the
+worthless here: a first pass on one common NES cart returned a $5 low (a damaged copy that slipped the
 filter) and a $2,200 high (a graded copy), which would have made the band meaningless.
 The exclusion list above (`manual`, `damaged`, `untested`, `graded`, `lot`, `bundle`) is
 what pulled those bands back to something usable.
@@ -441,9 +441,10 @@ lean vanished**: median delta **+0%** on loose items (16 of 33 below PC) and **+
 runs high — that conclusion came from a 12-item sample that happened to be all popular NES
 and N64 carts.
 
-What survives is **per-item disagreement**, which is where the money actually is: Seaman
-[Mic Bundle] −38%, Resident Evil 2 −35%, Mario Golf −22%, GoldenEye −19% — against Um Jammer
-Lammy **+27%**, Space Channel 5 **+14%**, PSO Episode I & II **+14%**. Pulling `comps` is
+What survives is **per-item disagreement**, which is where the money actually is: individual
+items ranged from **−38% to +65%** against the book, and the widest gaps clustered in
+hardware, accessories and bundled sets — the categories PriceCharting tracks most thinly.
+Pulling `comps` is
 worth it not because it shifts the whole book, but because it catches the individual items
 where the book is wrong by a third in either direction.
 
@@ -492,7 +493,7 @@ disc). That keeps Median condition-matched, same as every other source.
 
 **Expect dealer ask to run high — that is the point, not an error.** Measured across 12
 gold items on 2026-09-10, DKOldies sat **+15% to +113%** over PriceCharting's
-condition-matched number (median ≈ +67%). Pokemon Blue: PriceCharting $61, DKOldies $130.
+condition-matched number (median ≈ +67%). The widest case ran $61 book against a $130 ask.
 Report it as the retail ceiling, and never quote it as what the user's copy will fetch.
 
 Gotchas:
