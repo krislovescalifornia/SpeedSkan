@@ -261,17 +261,43 @@ the user for your own work.
 |---|---|---|---|
 | `est` | **Your own estimate. Not a sourced price.** Model judgment only — *yours*, never the user's. | anything, as a placeholder until comped | n/a — replace it as soon as a real comp exists |
 | `pricecharting` | PriceCharting: the retro-game price standard. Loose / CIB / new, derived from completed sales. | games, consoles, OEM accessories (NTSC/PAL/JP) | Browser pane — see below. WebFetch 403s. |
-| `comps` | eBay **sold** listings, or a retailer's asking price that you read yourself | third-party accessories, bundles, anything PriceCharting doesn't track | eBay search → filter **Sold items**. Note in `Notes` if it's an *ask*, not a sale. |
+| `comps` | eBay **sold** listings — real completed sales | the *mid* number; anything PriceCharting doesn't track | **Needs the user's signed-in Chrome** (`mcp__claude-in-chrome__*`) — see below. The Browser pane is IP-blocked. |
+| `dealer-ask` | A retro dealer's **retail asking price** for a cleaned, tested, warrantied copy | the *ceiling* — what a buyer pays shopping around | DKOldies / Game Over Videogames — see below. Plain HTML, no login. |
 | `discogs` | Discogs release data + real sold statistics | vinyl / music media | Discogs API (needs a token) |
 
 Per-category best source, for when the collection widens past games:
 
-- **video games / consoles / OEM accessories** → PriceCharting
+- **video games / consoles / OEM accessories** → PriceCharting for the baseline, then at
+  least one `dealer-ask` before anything is called a sell
 - **vinyl records** → Discogs (strong ID *and* sold stats)
 - **trading cards** → eBay sold + 130Point; PSA/PWCC for graded
 - **toys & other collectibles** → eBay sold; Facebook Marketplace for local pricing
-- eBay has locked down *programmatic* sold-comp access — read sold listings by hand, or
-  use Terapeak inside Seller Hub.
+
+#### Three sources is not three opinions
+
+PriceCharting **is** an aggregate of eBay sold listings — and so is GameValueNow. Stacking
+those gives you one opinion three times, with the same blind spots in all three. What makes
+a second source worth pulling is *independence*. Aim for one number per band:
+
+| Band | Source | What it answers |
+|---|---|---|
+| **Floor** | dealer *buy* / trade-in price | what a shop would hand the user today |
+| **Mid** | `pricecharting`, `comps` | what it actually trades at |
+| **Ceiling** | `dealer-ask` | retail, cleaned and warrantied |
+
+Verified 2026-09-10 — GoldenEye 007 (N64): PriceCharting **$31** loose, DKOldies **$42.99**
+for a cleaned loose cart. A ~39% spread that a single source hides completely.
+
+Known bias worth carrying: a listing with an inflated ask that sold via **accepted Best
+Offer** is often recorded at the *ask*, not the sale — in PriceCharting and in eBay's own
+sold view alike. [130Point](https://130point.com/sales/) reveals the accepted-offer price
+and is the cheapest correction for it (needs the signed-in Chrome; Cloudflare blocks the
+Browser pane).
+
+No floor source is wired up yet. PriceCharting's **Legendary** tier ($49/mo) bundles
+GameStop buy/sell prices plus API + bulk CSV download — the CSV would replace the
+~150-row index scraping below. Worth raising with the user only if they are pricing
+hundreds of items; don't assume the subscription exists.
 
 ### Pulling PriceCharting numbers (the working method)
 
@@ -314,12 +340,22 @@ Gotchas, all learned the hard way:
 - A **wrong slug also lands on "Just a moment…"**, which looks identical to rate-limiting.
   Treat a challenge page as a bad slug first: run a WebSearch restricted to
   `pricecharting.com` and read the real URL out of the returned links.
+- **Guessing a product slug mostly fails.** `platinum-controller`, `wavebird-controller`,
+  `keyboard`, `xbox/controller`, `super-advantage` all returned the challenge page on
+  2026-09-11; the real slugs were `wavebird-wireless-controller`, `duke-controller`,
+  `green-s-type-controller`, `sega-dreamcast-keyboard`. Don't burn calls guessing — go to
+  the genre sub-page, or run a WebSearch restricted to `pricecharting.com` and read the
+  real URL out of the links (then read prices off the live page, never the snippet).
 - Slug quirks: `&` → `%26`; apostrophes are kept literally
   (`zelda-collector's-edition`); numerals usually replace roman ones (`shinobi-3`,
   `gradius-3`); Zelda titles drop "The Legend of" (`zelda-wind-waker`).
-- Some items simply **aren't tracked** (obscure third-party accessories — ASCIIWARE Super
-  Advantage, Sega Arcade Power Stick). Don't force a match; leave them `est` and get an
-  eBay sold comp instead.
+- **Hardware is not in the main index — it is in the genre sub-pages**, and far more of it
+  is tracked than it first appears. Verified 2026-09-11: ASCIIWARE Super Advantage and the
+  Sega Arcade Power Stick *are* both tracked (this file previously claimed they weren't),
+  as are every console, OEM controller, the Dreamcast keyboard and mouse. Before concluding
+  an item is untracked, check:
+  `?genre-name=systems` (consoles), `?genre-name=controllers` (OEM pads, sticks, WaveBird),
+  `?genre-name=accessories` (keyboards, mice, adapters). Add `&sort=popularity`.
 - **Sort order is sticky (a session cookie), and it silently poisons later reads.** After
   one visit to `?sort=lowest-price`, every later `/console/<slug>` returned the *cheapest*
   list — same URL, same-looking table, wrong rows. **Always pass `?sort=popularity`
@@ -328,6 +364,13 @@ Gotchas, all learned the hard way:
 - **The index is capped at ~150 rows.** The "More" button doesn't paginate, and genre
   sub-pages are capped too. The long tail (obscure sports carts, accessories) needs direct
   product URLs — plan on the index for the popular 60-70% and product pages for the rest.
+
+**`browser_batch` can hand you the previous page's numbers.** A `javascript_exec` placed
+right after a `navigate` sometimes runs before the new document is ready and reads the page
+*before* it — on 2026-09-11 this silently attributed Genesis Arcade Power Stick sales to a
+Dreamcast console search, which would have been recorded as a real comp. **Always return
+`document.title` alongside the numbers and check it names the page you asked for.** If it
+doesn't, re-run that lookup on its own.
 
 **Verify every fuzzy match before you record it.** Substring matching happily returns a
 *different product*: `pga tour golf` → "PGA Tour Golf II [Limited Edition]", `nba jam` →
@@ -340,6 +383,134 @@ list of titles for a system and pricing those is fabrication, even when every in
 price is real — you end up recording comps for games the user has never owned. Read the
 actual rows, group them, and match against those.
 
+### Pulling eBay sold comps (needs the user's Chrome)
+
+**As of late August 2026 eBay requires a login for sold listings.** Any logged-out search
+with `LH_Sold=1` redirects to `signin.ebay.com`. On top of that, eBay hard-blocks the
+Browser pane's IP — `mcp__Claude_Browser__*` returns "Security Measure" or an error page.
+Both together are why this source sat at 2 rows while `pricecharting` reached 193.
+
+So drive the user's real Chrome: `mcp__claude-in-chrome__*`, where their eBay session
+already exists. If `tabs_context_mcp` reports the extension isn't connected, say so and ask
+them to open the Claude side panel in Chrome — do **not** silently fall back to the Browser
+pane and do **not** record a WebSearch snippet instead.
+
+```
+https://www.ebay.com/sch/i.html?_nkw=<query>&LH_Sold=1&LH_Complete=1
+```
+
+**Do not add `&_ipg=60`.** Verified 2026-09-10: the deep link with `_ipg` tripped eBay's
+`splashui/challenge` ("Pardon Our Interruption") even in a signed-in browser; the same URL
+without it returned ~60 sold cards cleanly. If you do get challenged, load `ebay.com` first
+and re-issue the search — the homepage visit clears it.
+
+Results are `.s-card` (**not** `.s-item` — that markup is gone), with `.s-card__title` and
+`.s-card__price` inside. Every card also contains the string `derosnopS` — "Sponsored"
+reversed, an anti-scrape trick — so a sponsored test matches everything and is useless as a
+filter. Ignore it and filter on the title instead:
+
+```js
+(()=>{const I=/n64|nintendo ?64/i,                      // must match
+       E=/\bds\b|gamecube|lot |bundle|manual|repro|graded|damaged|untested/i,  // must not
+       C=/complete|\bcib\b|w\/ ?box|boxed|in box|sealed/i;   // CIB markers
+ const r=[...document.querySelectorAll('.s-card')].map(c=>{
+   const t=((c.querySelector('.s-card__title')||{}).innerText||'')
+     .replace(/NEW LISTING|Opens in a new window or tab/g,'').replace(/\s+/g,' ').trim();
+   const m=((c.querySelector('.s-card__price')||{}).innerText||'').match(/\$([\d,]+\.\d{2})/);
+   return t&&m?{t,v:+m[1].replace(/,/g,'')}:0}).filter(Boolean)
+  .filter(o=>I.test(o.t)&&!E.test(o.t))
+  .filter(o=>C.test(o.t)===WANT_CIB);          // condition-match the user's actual copy
+ const v=r.map(o=>o.v).sort((a,b)=>a-b), q=p=>Math.round(v[Math.round((v.length-1)*p)]);
+ return {n:v.length, p25:q(.25), med:q(.5), p75:q(.75)}})()
+```
+
+**Record `Low`/`High` as p25/p75, and `Median` as p50** — not min/max. Raw min/max is
+worthless here: a first pass on Contra returned a $5 low (a damaged cart that slipped the
+filter) and a $2,200 high (a graded copy), which would have made the band meaningless.
+The exclusion list above (`manual`, `damaged`, `untested`, `graded`, `lot`, `bundle`) is
+what pulled those bands back to something usable.
+
+Aim for **n ≥ 30** matched sales. Below that the median is noise — widen the query or say
+so rather than recording a thin number as if it were solid.
+
+**What this source is actually for — and what it is not.** A first pass over 12 popular
+loose cartridges on 2026-09-10 showed eBay's median running 0% to −19% *below*
+PriceCharting, which looked like a systematic optimism bias. **At n=56 on 2026-09-11 that
+lean vanished**: median delta **+0%** on loose items (16 of 33 below PC) and **+4%** on CIB
+(6 of 23 below). The two sources agree on the aggregate. Do not tell the user PriceCharting
+runs high — that conclusion came from a 12-item sample that happened to be all popular NES
+and N64 carts.
+
+What survives is **per-item disagreement**, which is where the money actually is: Seaman
+[Mic Bundle] −38%, Resident Evil 2 −35%, Mario Golf −22%, GoldenEye −19% — against Um Jammer
+Lammy **+27%**, Space Channel 5 **+14%**, PSO Episode I & II **+14%**. Pulling `comps` is
+worth it not because it shifts the whole book, but because it catches the individual items
+where the book is wrong by a third in either direction.
+
+A general lesson worth carrying: **do not generalize a pricing pattern from a dozen items,
+and never from a dozen items that share a platform and a condition.** State the sample size
+next to any cross-item claim, and re-check it as the sample grows.
+
+### Pulling dealer-ask numbers
+
+Two US dealers serve plain HTML with no login and no Cloudflare challenge (verified
+2026-09-10). Both are *asking* prices for cleaned, tested, warrantied stock — a real
+ceiling, never a sold price. Always record them as `dealer-ask`, never as `comps`.
+
+```
+https://www.dkoldies.com/search.php?search_query=<query>
+https://www.gameovervideogames.com/search?q=<query>
+```
+
+Both list prices directly in search results, so one load prices several items. On DKOldies
+read the cards rather than the page text — `article.card` carries a clean `data-name`
+(platform included) and the innerText holds the price range:
+
+```js
+(()=>{const re=/mario kart 64/i;
+ return [...document.querySelectorAll('article.card')]
+  .map(c=>({n:(c.dataset.name||'').trim(),
+            ps:[...new Set((c.innerText.match(/\$[\d,.]+/g)||[]))]}))
+  .filter(o=>re.test(o.n)).map(o=>o.n+' >> '+o.ps.join(' / '))})()
+```
+
+**The two numbers on a DKOldies card are not loose/CIB — what they mean depends on the
+medium, and getting this backwards silently doubles or halves the row:**
+
+| Medium | Variants offered | Low price is | High price is |
+|---|---|---|---|
+| **Cartridge** (NES/SNES/N64/GB/Genesis) | Cosmetically Flawed Cartridge → Good Cartridge | flawed **loose** | good **loose** |
+| **Disc** (GameCube/PS/DC/Xbox) | Cosmetically Flawed → Game Only → Game in Case → Complete | **loose** | **CIB** |
+
+So a cartridge card's *high* number is still a loose price — never file it as CIB. Confirm
+on the product page (`Quality:` = cartridge, `Includes:` = disc) whenever the item is
+worth enough to matter.
+
+For a `dealer-ask` row: **Low** = cheapest variant, **High** = dearest variant, **Median** =
+the variant matching the user's actual copy (good-cart for a loose cart, Complete for a CIB
+disc). That keeps Median condition-matched, same as every other source.
+
+**Expect dealer ask to run high — that is the point, not an error.** Measured across 12
+gold items on 2026-09-10, DKOldies sat **+15% to +113%** over PriceCharting's
+condition-matched number (median ≈ +67%). Pokemon Blue: PriceCharting $61, DKOldies $130.
+Report it as the retail ceiling, and never quote it as what the user's copy will fetch.
+
+Gotchas:
+
+- **DKOldies' catalog is NES–PS2-era and shallow on imports/shmups.** `ikaruga` returns
+  nothing. A miss means "they don't stock it", not "it's worthless" — leave the band empty.
+- Their search fuzzes hard (`goldeneye` → `golden`), so results include Golden Sun, Golden
+  Nugget, Golden Compass. The same name-collision rule applies: read `target => matched
+  title | price` pairs before recording.
+- Game Over Videogames prefixes the platform (`X360 Golden Compass`), which makes the
+  platform check easy — use it.
+- These are *live stock*. An item they don't currently have simply won't appear.
+
+Blocked, for the record, so nobody re-tests them: eStarland, Lukie Games, CeX/WeBuy API and
+130Point all sit behind Cloudflare from the Browser pane; GameValueNow refuses the
+connection outright; eBay's Marketplace Insights API (90-day sold data) has been
+application-only and closed to new developers since ~2020.
+
 ### Recording an observation
 
 1. Map each item to Low / Median / High and append a dated row to `price_history.csv`:
@@ -351,7 +522,8 @@ actual rows, group them, and match against those.
      just remind the user the retail-high band is a CIB ceiling, not what their loose copy
      fetches.
    - **URL** = the exact page you read. Every non-`est` row must carry one.
-   - Source `pricecharting`, or `comps` for eBay/retailer-derived. Use today's date.
+   - Source `pricecharting`, `comps` (eBay sold), or `dealer-ask` (retailer asking price).
+     Use today's date. Never file a dealer's ask as `comps` — it is not a sale.
 2. **Only record numbers you actually found — never invent a price.** Match the region
    (NTSC/US).
 3. **Confirm you matched the right *product*, not just the right name** (see the

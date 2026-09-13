@@ -69,9 +69,17 @@ Your data lives in plain files in your working folder:
 ### Estimates vs. real comps
 
 When an item is first scanned, its price is **Claude's estimate** — fast, good enough to
-triage, and logged with source `est`. Say **"refresh prices"** and Claude looks up real
-market comps (PriceCharting for games/consoles; eBay sold listings for things it doesn't
-track) and replaces the estimate, recording the source URL.
+triage, and logged with source `est`. Say **"refresh prices"** and Claude replaces it with
+real market comps, recording the URL every number was read from. Three independent sources:
+
+- **`pricecharting`** — the retro-game price standard. Book value.
+- **`comps`** — eBay **sold** listings, read through your own signed-in Chrome (eBay put
+  sold data behind a login in August 2026). What a copy actually fetches.
+- **`dealer-ask`** — a retro dealer's retail price for a cleaned, tested copy. The ceiling.
+
+Across 82 comped items they agree in aggregate — median difference between eBay and
+PriceCharting was 0%. They disagree sharply on *individual* items, though (−38% to +65%),
+and hardware is where the gaps are widest. That is the whole reason to pull more than one.
 
 The `Sources` column tells you which is which: `est` means nobody has checked it yet.
 That distinction matters — in one real refresh, estimates ran ~39% *below* actual comps,
