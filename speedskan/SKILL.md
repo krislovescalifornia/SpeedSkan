@@ -29,7 +29,7 @@ it lives in plain CSV files in the project root and survives across sessions:
   from `items.csv` by the build script. Never hand-edit this; edit `items.csv` instead.
 
 Everything for this collection lives in one folder (the project root, e.g.
-`C:/Users/Kris/dev/ebaytool`): the data, the scan pictures, and this skill.
+`C:/Users/<you>/dev/<collection>`): the data, the scan pictures, and this skill.
 
 ## Why a webcam pipe (and the one hard constraint)
 
