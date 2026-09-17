@@ -6,8 +6,10 @@ everything to a running spreadsheet. Built for triaging a big pile fast — "the
 the gold."
 
 Point your camera at a shelf of NES/SNES/N64/GameCube/Genesis/Dreamcast/Game Boy games (or
-consoles, controllers, VMUs, whatever), say **"look"**, and Claude reads the frame, prices
-each item, and appends it to `items.csv`. Totals recompute every batch.
+consoles, controllers, VMUs, whatever), a crate of vinyl records, or a box of baseball cards,
+say **"look"**, and Claude reads the frame, prices each item, and appends it to `items.csv`.
+Totals recompute every batch. For cards it pulls ungraded, PSA 9 and PSA 10 prices, so the
+few cards worth grading stand out from the bulk.
 
 ---
 
@@ -43,8 +45,10 @@ C:\Users\<you>\.claude\skills\speedskan\   # Windows
 ```
 
 Then open Claude Code in that folder and say something like **"let's scan my games"** or
-run **`/speedskan`**. (Skills load at session start, so start a fresh session after
-installing.)
+run **`/speedskan`** with no arguments. (Skills load at session start, so start a fresh
+session after installing. Arguments after `/speedskan` get substituted into the skill's
+`$0`, `$1`… placeholders and garble its dollar figures, so put session context in your
+next message instead.)
 
 ---
 
@@ -76,6 +80,9 @@ real market comps, recording the URL every number was read from. Three independe
 - **`comps`** — eBay **sold** listings, read through your own signed-in Chrome (eBay put
   sold data behind a login in August 2026). What a copy actually fetches.
 - **`dealer-ask`** — a retro dealer's retail price for a cleaned, tested copy. The ceiling.
+
+Vinyl is priced from **Discogs** sold statistics, and trading cards from **SportsCardsPro**
+(ungraded / PSA 9 / PSA 10).
 
 Across 82 comped items they agree in aggregate — median difference between eBay and
 PriceCharting was 0%. They disagree sharply on *individual* items, though (−38% to +65%),

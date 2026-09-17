@@ -6,6 +6,7 @@ description: >-
   have them identified, valued, and sorted into keep/sell/bulk tiers — phrases like
   "scan my games", "what's this worth", "look" (while showing an item on camera),
   "appraise these", "let's do more of the collection", "value this cartridge/console",
+  "scan these baseball cards", "is this card worth grading",
   or resuming a cataloging session. Also use it to resume or add to the running
   inventory (items.csv / inventory.csv) even if the webcam isn't mentioned. This is
   the standing system for documenting the collection over many sessions/months, so
@@ -60,6 +61,13 @@ latest frame whenever the user says "look".
 If the user is resuming and just wants to keep adding items, the server may already be
 running — check before starting a second one.
 
+**Launch the skill with no arguments.** The skill loader treats `$0`, `$1`, `$2`… in this
+file as argument placeholders. Passing even a short phrase (e.g. "baseball cards session")
+rewrites every dollar figure that starts with a digit — `$0.90` renders as "baseball.90",
+`$8–15` as "camera–15" — and the calibration numbers below become unreadable. The file on
+disk is fine; only the loaded copy is mangled. Put any session context in your first
+message instead of in the skill arguments.
+
 **First run (fresh install / new user):** if `items.csv` doesn't exist yet, create it with
 exactly this header row before the first append, so the schema is right from the start:
 
@@ -69,7 +77,7 @@ System,Title,Completeness,Tier,Est_Low,Est_High,Dealer,Notes,Status
 
 ## Settle these once per collection (then carry them forward)
 
-Four questions decide how a whole session runs. Ask them at the start of the first session
+Five questions decide how a whole session runs. Ask them at the start of the first session
 of a new medium, record the answers, and don't re-ask every time.
 
 - **Grading depth.** Media-first (assume the item plays, note sleeve/cover damage in
@@ -84,6 +92,11 @@ of a new medium, record the answers, and don't re-ask every time.
   is deliberate; treat it as the preferred input rather than a problem.
 - **How many items per frame.** Two works well for flat media like records and roughly
   doubles throughput. Keep the per-batch reply to the identifications plus the totals table.
+- **Trading cards: show every card, or presort?** Early in a new box, show everything —
+  a mint common can be a real grading candidate, and a presort by player name misses it.
+  Once the box has shown its pattern, the user may reasonably switch to presorting (stars,
+  rookies, subsets, errors, anything that looks sharp). That is the user's call; offer the
+  pull-list, don't push it.
 
 ## The scan loop
 
@@ -297,6 +310,65 @@ press and small labels, jazz (Blue Note, Impulse!), soul/funk, reggae, obscure o
 hip-hop, novelty/kitsch with a niche, anything never reissued — and modern short-run indie
 albums whose artist has since grown.
 
+### Trading cards
+
+Measured across ~250 cards on 2026-09-16 — one box of late-80s/early-90s Topps and Donruss,
+plus one hockey card. Trust this over first instinct.
+
+**The one-line version: for junk-wax cards the money is in the grading multiple, not the raw
+price.** Record `Ungraded / Grade 9 / PSA 10` for every star and every card that looks sharp,
+and let the PSA 10 figure decide whether a card leaves the bulk pile.
+
+- **Junk-wax raw prices are flat, whoever is on the card.** 1986–1991 Topps and Donruss were
+  printed in the millions. Seven Hall of Famers' base cards all landed at **~$1–2.25 raw**
+  ($0.99, $0.99, $0.99, $1.15, $1.42, $1.49, $2.24). Commons are pennies. A whole box of
+  ~250 cards came to **$32–122**, dealer ~$11. Say that plainly and early; it recalibrates
+  the user fast.
+- **The PSA 10 multiple is not tied to fame — it tracks how hard *that* card is to grade.**
+  In one 1988 set, two cards at the same ~$1 raw price: a non-Hall-of-Famer's PSA 10 at
+  **$179**, a Hall of Famer's at **$31**. A 1986 Hall-of-Fame pitcher's base card ran $2.24
+  raw → **$4,049** PSA 10; a 1986 #1 card $1.62 → **$2,771**; a 1990 All-Star subset card
+  $1.28 → **$189**. Other stars' PSA 10s sat at $36 and $39. Look it up; you cannot guess it.
+- **Dark or coloured borders are where the grading premium lives.** 1986 Topps (black top
+  band) and 1988 Donruss (black/blue stripes) show every chip, so 10s are scarce and
+  expensive. White borders are not a free pass, though: a white-bordered 1990 Topps All-Star
+  card still ran $189 in a 10, so look up the PSA 10 either way.
+- **Grading economics.** Budget ~$20–25 per card. A PSA 9 often sells for about the fee, so
+  grading only pays when the card is a realistic 10 candidate, or its PSA 9 clears ~$50.
+  Tier those `Maybe` with the three prices in `Notes`, and list them in a grading pile at
+  the end of the session.
+- **The webcam cannot grade.** It shows fading and yellowed borders, not corners or
+  centering. Ask the user to flag cards that feel mint in hand — in the measured session the
+  best grading candidate among the commons came from the user, not the camera.
+- **Things that look valuable and aren't:** manager cards, team-leader cards, All-Star subset
+  cards of stars (~$1), a Hall of Famer's non-rookie base card, and 1991 Donruss in general.
+- **Name collisions:** a father and son with the same name both have cards in the same
+  years — check the uniform and the suffix. A player's regular card in his rookie *year* is
+  not his Rookie Card. A gold-foil parallel can look like the base card except for the
+  nameplate (measured: $11.60 vs $2.10).
+- **Subsets sell as sets.** A six-card tribute subset ($1.13–1.50 raw each, PSA 10s $62–105)
+  belongs on one row.
+- **Team-sorted runs mean a hand-collated set**, which sells better whole than as loose
+  commons.
+- **Holders are a signal.** A card in a screw-down holder was someone's idea of a keeper —
+  look it up even mid-batch.
+
+**Identifying the year from the front** (the camera reads designs long before it reads
+backs): 1986 Topps — black top band with team name in white block letters; 1987 Topps —
+wood-grain border; 1988 Topps — white border, team name across the top, diagonal name bar
+bottom-right; 1989 Topps — team name in script on a curved banner; 1990 Topps — multicolour
+dotted borders, name in a coloured bar; 1988 Donruss — blue borders with black and red
+stripes; 1991 Donruss — blue (series 1) or green (series 2) borders with stripes.
+
+**Throughput that worked:** lay out 12–20 cards in rows, crop each row at ~4x with PIL, and
+log **one lot row per set per batch** with every player named in parentheses (the catalog
+doubles as a checklist). Pull a card onto its own row when its PSA 10 clears ~$50, it has a
+tracked error/parallel, or the user calls it mint.
+
+**Where card value hides, in short:** key rookie cards, well-known error cards, the
+tough-border sets above in top condition, tracked parallels, pre-1980 vintage, and anything
+a collector put in an album or a holder as a kid.
+
 When you're unsure of a value, give a sensible range and say it's approximate rather than
 stalling. The user can correct you, and corrections should be applied immediately.
 
@@ -333,11 +405,13 @@ Columns, in order:
 
 - **System** — e.g. `NES`, `SNES`, `Nintendo 64`, `GameCube`, `Genesis`, `Game Boy`,
   `Game Boy Color`, `Game Boy Advance`, `Sega Saturn`, `Sega 32X`, `Master System`,
-  `Game Gear`, `Dreamcast`, `Wii`, `Virtual Boy`, plus `Vinyl` for records. New systems are
+  `Game Gear`, `Dreamcast`, `Wii`, `Virtual Boy`, plus `Vinyl` for records and
+  `Baseball Card` / `Hockey Card` etc. for trading cards. New systems are
   fine — the build script sorts known ones first and puts the rest under "Other".
 - **Completeness** — `Loose`, `CIB`, `Console + cables`, `CIB + mic`, etc. For records:
   `LP`, `Gatefold LP`, `2xLP`, `3xLP`, `12in single`, `LP + booklet`, `LP + bonus 7in`,
-  `LP + download card`. Put an unresolved question in the field itself while it is open
+  `LP + download card`. For cards: `Raw`, `Raw - owner says mint`, `PSA 9`, `BGS 9.5`.
+  Put an unresolved question in the field itself while it is open
   (e.g. `2xLP - CONFIRM both discs`) so it shows up in the catalog rather than only in Notes.
 - **Tier** — exactly `Gold`, `Maybe`, or `Cruff` (the build script keys on these).
 - **Est_Low / Est_High / Dealer** — whole-dollar integers.
@@ -407,6 +481,13 @@ Prices are tracked over time so the user can watch items rise/fall. Two files dr
 point: `python .claude/skills/speedskan/scripts/snapshot_prices.py` — appends today's `est`
 snapshot for every item (idempotent per day).
 
+**Once real comps exist, running it again corrupts the book.** The build takes the *latest
+date* as current, so a fresh `est` row today overrides a real comp from an earlier date. On
+2026-09-16 re-running it after new items were added wrote 343 rows and jumped the portfolio
+median from $7,431 to $9,343 — every comped item silently reverted to its estimate. After the
+first seed, only add `est` rows for items that have **no** `price_history.csv` rows yet, and
+compare the totals before and after any snapshot.
+
 ### Where prices come from
 
 Every number in this system is one of these. Keep the roster honest — the `Source` and
@@ -424,6 +505,7 @@ the user for your own work.
 | `pricecharting` | PriceCharting: the retro-game price standard. Loose / CIB / new, derived from completed sales. | games, consoles, OEM accessories (NTSC/PAL/JP) | Browser pane — see below. WebFetch 403s. |
 | `comps` | eBay **sold** listings — real completed sales | the *mid* number; anything PriceCharting doesn't track | **Needs the user's signed-in Chrome** (`mcp__claude-in-chrome__*`) — see below. The Browser pane is IP-blocked. |
 | `dealer-ask` | A retro dealer's **retail asking price** for a cleaned, tested, warrantied copy | the *ceiling* — what a buyer pays shopping around | DKOldies / Game Over Videogames — see below. Plain HTML, no login. |
+| `sportscardspro` | SportsCardsPro (PriceCharting's sister site): ungraded / Grade 9 / PSA 10, from completed sales | trading cards, graded and raw | **Browser pane works, and so does its search** (verified 2026-09-16) — see below. |
 | `discogs` | Discogs release data + real sold statistics | vinyl / music media | **Browser pane works — no login, no Cloudflare** (verified 2026-09-13). API needs a token; the release page doesn't. |
 
 Per-category best source, for when the collection widens past games:
@@ -431,7 +513,9 @@ Per-category best source, for when the collection widens past games:
 - **video games / consoles / OEM accessories** → PriceCharting for the baseline, then at
   least one `dealer-ask` before anything is called a sell
 - **vinyl records** → Discogs (strong ID *and* sold stats)
-- **trading cards** → eBay sold + 130Point; PSA/PWCC for graded
+- **trading cards** → SportsCardsPro for raw / Grade 9 / PSA 10 (Browser pane); TCDB
+  (tcdb.com) for checklists and card numbers; eBay sold + 130Point as the independent
+  check (needs the user's Chrome)
 - **toys & other collectibles** → eBay sold; Facebook Marketplace for local pricing
 
 #### Three sources is not three opinions
@@ -720,6 +804,42 @@ PriceCharting.
   track titles in a plain WebSearch resolved a textless sleeve instantly; a label logo plus
   its printed address resolved an unlabeled 12-inch. Discogs is the price source, not always
   the identification source.
+
+### Pulling SportsCardsPro numbers (trading cards)
+
+SportsCardsPro is PriceCharting's sister site for cards and shares its page layout — but
+**its search works from the Browser pane** (verified 2026-09-16), which PriceCharting's does
+not. That makes it the fastest card source by far: one load per card, no slug guessing.
+
+```
+https://www.sportscardspro.com/search-products?q=<year>+<brand>+<player>&type=prices
+```
+
+```js
+document.title+' || '+[...document.querySelectorAll('#games_table tbody tr')].slice(0,6)
+  .map(r=>r.innerText.replace(/\s+/g,' ').trim()).join(' ## ')
+```
+
+Each row reads `Player [variant] #num Set (Sport) $ungraded $grade9 $psa10`.
+
+- **Read every row, not the first.** The same query returns the base card alongside its
+  parallels and errors, tagged in brackets — `[Gold]`, `[Error]`, `Tiffany`, `[Reverse
+  Negative]` — and those are routinely 5–50x the base card. This is the card version of the
+  name-collision trap: record the base card unless the user's copy shows the variant's tell,
+  and name the variant and its price in `Notes` so the user can check.
+- **Match the card number.** A star has several cards in one set (base, All-Star, record
+  breaker, MVP bonus). Read the number off the back when the price diverges.
+- **A single match redirects to the product page** (title `<Player> #N Prices | <set>`) and
+  the table comes back empty. The `#used_price` / `#complete_price` / `#new_price` ids there do
+  **not** map to Ungraded / Grade 9 / PSA 10 — broaden the query to get the table row instead.
+- **Set index:** `/console/baseball-cards-<year>-<brand>?sort=popularity` lists the ~150
+  most-traded cards of a set with all three prices. A card that is *absent* from it is a
+  common — no need to look it up individually.
+- **TCDB** (`tcdb.com`) loads fine for checklists. Never guess a set id: a guessed
+  `/ViewSet.cfm/sid/…` landed on an unrelated hockey set.
+- The ungraded figure for a common sits near **$1** because that is the floor a single card
+  sells for once shipping is covered. In a bulk lot the same card is worth cents — price lots
+  by the lot, not by summing per-card figures.
 
 ### Recording an observation
 
