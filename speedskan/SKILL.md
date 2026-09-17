@@ -386,6 +386,35 @@ im.crop((330, 260, 930, 690)).resize((1200, 860)).save("captures/_zoom.png")
 
 Then Read `captures/_zoom.png`. Reuse `_zoom.png` (or numbered variants) as scratch.
 
+**Freeze the frame before cropping.** The page auto-sends a new frame every ~2 seconds and
+overwrites `latest.jpg`, so a crop taken a few calls after you Read the frame can come from
+a *different* frame. On 2026-09-16 an album page slid across the mat between reads, and the
+crop coordinates landed on the wrong column. Copy the frame first
+(`cp captures/latest.jpg captures/_frame.jpg`), then Read and crop `_frame.jpg` only. This
+matters most on multi-card pages, where you crop the same frame several times.
+
+## Labeled page overlay (when the user asks which card is which)
+
+For items the user can't easily pull out, like cards in album sleeves or records on a
+shelf, a text readout of "top row, middle" is hard to match to the physical page. When the
+user asks, render the frozen frame with a label over each item and send it as a PDF.
+Verified 2026-09-16 on two 9-pocket album pages; the user found it the clearest way to see
+which card was which.
+
+- Crop the page out of `_frame.jpg` and upscale it about 5x with PIL (LANCZOS).
+- For each pocket, draw an outline in the item's tier color and a dark semi-opaque box at
+  the bottom of the item. Put the set, year and number on the first line, a highlighted
+  callout on the second (e.g. `ROOKIE CARD` or `CHECK: PSA 10 $250`), and prices on the
+  third. Number each pocket in its top-left corner, left to right and top to bottom.
+- Use one outline color per action, not per value: grading candidate, check condition,
+  bulk, and grey for items facing backwards (label those `FLIP TO IDENTIFY`).
+- Add a white header with a title, the price source and date, and a color legend. Fonts:
+  `C:/Windows/Fonts/arialbd.ttf` and `arial.ttf` on Windows.
+- Save with `Image.save('<name>.pdf', resolution=150)` to the **scratchpad, not the project
+  root**, since it's a one-off and would otherwise land in git. Save a PNG copy too, Read it
+  to check the labels line up with the items, then send the PDF with `display: render`.
+- Offer it per page; don't generate one every batch unless the user asks.
+
 ## Authenticity checks (avoid mispricing bootlegs / third-party)
 
 - **Green/translucent Game Boy shells** are a bootleg red flag — but *clear/smoke* shells
